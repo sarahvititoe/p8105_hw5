@@ -1,0 +1,62 @@
+---
+title: "Homework 5"
+author: "Sarah Vititoe"
+date: "11/8/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+Homework 5
+Context
+This assignment reinforces ideas in Iteration.
+
+Due date
+Due: November 9 at 4:00pm.
+
+Points
+Problem 0: 20 points
+Problem 1: 35 points
+Problem 2: 45 points
+Problem 0
+This “problem” focuses on structure of your submission, especially the use git and GitHub for reproducibility, R Projects to organize your work, R Markdown to write reproducible reports, relative paths to load data from local files, and reasonable naming structures for your files.
+
+To that end:
+
+create a public GitHub repo + local R Project for this assignment
+write solutions using a .Rmd file that outputs a github_document / .md file
+submit a link to your repo via Courseworks
+Your solutions to Problems 1 and 2 should be implemented in your .Rmd file, and your git commit history should reflect the process you used to solve these Problems.
+
+For Problem 0, we will assess adherence to the instructions above regarding repo structure, git commit history, and whether we are able to knit your .Rmd to ensure that your work is reproducible. Adherence to appropriate styling and clarity of code will be assessed in Problems 1+ using the homework style rubric.
+
+This homework includes figures; the readability of your embedded plots (e.g. font sizes, axis labels, titles) will be assessed in Problems 1+.
+
+Problem 1
+This zip file contains data from a longitudinal study that included a control arm and an experimental arm. Data for each participant is included in a separate file, and file names include the subject ID and arm.
+
+Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:
+
+Start with a dataframe containing all file names; the list.files function will help
+Iterate over file names and read in data for each subject using purrr::map and saving the result as a new variable in the dataframe
+Tidy the result; manipulate file names to include control arm and subject ID, make sure weekly observations are “tidy”, and do any other tidying that’s necessary
+Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
+
+Problem 2
+The Washington Post has gathered data on homicides in 50 large U.S. cities and made the data available through a GitHub repository here. You can read their accompanying article here.
+
+Describe the raw data. Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
+
+For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+
+Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of  purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.
+
+Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+
+Survey
+Please complete this survey regarding extra topics to cover at the end of the semester.
+
