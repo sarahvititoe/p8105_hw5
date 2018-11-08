@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
+### Problem 1
+
 *This zip file contains data from a longitudinal study that included a control arm and an experimental arm. Data for each participant is included in a separate file, and file names include the subject ID and arm.*
 
 *Create a tidy dataframe containing data from all participants, including the subject ID, arm, and observations over time:*
@@ -71,4 +73,90 @@ patient_records %>%
     theme(legend.position = "bottom") 
 ```
 
-We can see that patients in the control arm seem to not change noticably in their measurement over time. Meanwhile, we see a slight in crease in the measurements of patients in our experiemental group over time. 
+We can see that patients in the control arm do not seem to change in their measurement values over time. Meanwhile, we see a slight increase in the measurements of patients in our experiemental group over time. It seems that by week 8, all patients in the experimental group have a higher value of their measurement, compared to the control group. 
+
+### Problem 2
+*The Washington Post has gathered data on homicides in 50 large U.S. cities and made the data available through a GitHub repository here. You can read their accompanying article here.*
+
+```{r}
+homicide <- read_csv("./data/homicide-data.csv") %>% 
+  select(-contains("first"), -contains("last"))
+```
+
+*Describe the raw data.*
+
+Our data seems fairly clean. We have a record identifier, report date (that needs cleaning), demographic information about the victims, location information (city, state, lattitude, and longitude), and the case status. I'll immediately drop victim names, since I personally don't want to see any identifiable information. 
+
+*Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).*
+
+```{r create_city_state}
+homicide <- homicide %>% 
+  unite(col = city_state, city, state, sep = ", ")
+```
+
+```{r summary_unsolved_total}
+homicide_nest <- homicide %>% 
+  mutate(unsolved = as.numeric(ifelse(disposition == "Closed by arrest", 0, 1))) %>% 
+  group_by(city_state) %>% 
+  nest 
+  
+homicide_nest %>% 
+  mutate(total_homicide = map(data, tally)) %>% 
+  mutate(unsolved= map(data, ~sum(.$disposition != "Closed by arrest"))) %>% 
+  select(-data) %>% 
+  unnest() %>% 
+  rename(total_homicide = n) %>% 
+  arrange(desc(total_homicide)) %>% 
+  knitr::kable()
+```
+
+
+*For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.*
+
+```{r}
+baltimore_prop <- homicide_nest %>% 
+  unnest %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  summarise(x = sum(.$unsolved),
+            n = nrow(.))
+
+baltimore_output <- prop.test(baltimore_prop$x, baltimore_prop$n) %>% 
+  broom::tidy() %>% 
+  select(estimate, starts_with("conf")) 
+
+baltimore_output %>% knitr::kable()
+```
+
+The point estimate for the proportion of unsolved homicides in Baltimore is `r round(baltimore_output$estimate, 3)`, with a 95% confidence interval between `r round(baltimore_output$estimate, 3)`
+
+*Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of  purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.*
+
+```{r FUNCTION_test_prop}
+test_prop <- function(unsolved, total) {
+  
+  test <- prop.test(x = unsolved, n = total)
+  
+  test <- test %>% 
+  broom::tidy() %>% 
+  select(estimate, starts_with("conf")) 
+  
+  test
+}
+```
+
+```{r}
+homicide_nest %>%
+  mutate(unsolv = map(data, ~sum(.$unsolved))) %>%  
+  mutate(tot = map(data, ~nrow(.))) %>% 
+  mutate(test = map2(unsolv, tot, test_prop)) %>% 
+  select(city_state, test) %>% 
+  unnest() %>% 
+  arrange(desc(estimate)) %>% 
+  knitr::kable() 
+```
+
+Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+
+
+
+
