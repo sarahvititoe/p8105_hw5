@@ -12,7 +12,7 @@ library(tidyverse)
 ```
 
 ```{r}
-patient_records <- list.files(path = "./data", pattern = "^[ce][ox][np]_[0-9][0-9].csv$")
+patient_files <- str_c("./data/", list.files(path = "./data", pattern = "^[ce][ox][np]_[0-9][0-9].csv$"))
 ```
 
 ```{r}
@@ -20,20 +20,28 @@ read_records <- function(files){
   
   df <- read_csv(files)
   
-  df <- df %>% 
-    mutate(file_name = str_extract(files, "[ce][ox][np]_[0-9][0-9]"))
-  
   df
   
 }
 ```
 
-Test this function on 1 dataframe
 ```{r}
-read_records("./data/con_01.csv")
+patient_records <- patient_files %>% 
+  tibble(record = .) %>% 
+  group_by(record) %>% 
+  nest %>% 
+  mutate(data = map(.$record, read_records)) %>% 
+  unnest()
 ```
 
 
+
+```{r}
+  df <- df %>% 
+    mutate(file_name = str_extract(files, "[ce][ox][np]_[0-9][0-9]")) %>% 
+    separate(col = file_name, into = c("arm", "patient_id")) %>% 
+    mutate(arm = recode(arm, con = "control", exp = "experimental"))
+```
 
 
 
