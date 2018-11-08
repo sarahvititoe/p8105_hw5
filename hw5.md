@@ -329,6 +329,13 @@ homicide <- homicide %>%
   unite(col = city_state, city, state, sep = ", ")
 ```
 
+I think there might be an error in this dataset due to the fact that there were supposed to be 50 cities, but I get 51 in this dataset instead. Our datapoint with the fewest observations is Tulsa, AL, with 1 observation. Since I know this city\_state doesn't exist, and can't say for sure if this is supposed to be Tulsa, OK, I will remove this datapoint, since there seems to be a data entry error.
+
+``` r
+homicide <- homicide %>% 
+  filter(city_state != "Tulsa, AL")
+```
+
 ``` r
 homicide_nest <- homicide %>% 
   mutate(unsolved = as.numeric(ifelse(disposition == "Closed by arrest", 0, 1))) %>% 
@@ -397,7 +404,6 @@ homicide_nest %>%
 | San Bernardino, CA |       170|              275|
 | Savannah, GA       |       115|              246|
 | Tampa, FL          |        95|              208|
-| Tulsa, AL          |         0|                1|
 
 *For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.*
 
@@ -411,13 +417,9 @@ baltimore_prop <- homicide_nest %>%
 baltimore_output <- prop.test(baltimore_prop$x, baltimore_prop$n) %>% 
   broom::tidy() %>% 
   select(estimate, starts_with("conf")) 
-
-baltimore_output %>% knitr::kable()
 ```
 
-|   estimate|   conf.low|  conf.high|
-|----------:|----------:|----------:|
-|  0.6455607|  0.6275625|  0.6631599|
+The point estimate for the proportion of unsolved homicides in Baltimore is 0.646, with a 95% confidence interval between 0.628 and 0.663.
 
 *Now run prop.test for each of the cities in your dataset, and extract both the proportion of unsolved homicides and the confidence interval for each. Do this within a “tidy” pipeline, making use of purrr::map, purrr::map2, list columns and unnest as necessary to create a tidy dataframe with estimated proportions and CIs for each city.*
 
@@ -435,18 +437,17 @@ test_prop <- function(unsolved, total) {
 ```
 
 ``` r
-homicide_nest %>%
+homicide_ci <-homicide_nest %>%
   mutate(unsolv = map(data, ~sum(.$unsolved))) %>%  
   mutate(tot = map(data, ~nrow(.))) %>% 
   mutate(test = map2(unsolv, tot, test_prop)) %>% 
   select(city_state, test) %>% 
   unnest() %>% 
-  arrange(desc(estimate)) %>% 
+  arrange(desc(estimate)) 
+
+homicide_ci %>% 
   knitr::kable() 
 ```
-
-    ## Warning in prop.test(x = unsolved, n = total): Chi-squared approximation
-    ## may be incorrect
 
 | city\_state        |   estimate|   conf.low|  conf.high|
 |:-------------------|----------:|----------:|----------:|
@@ -500,6 +501,22 @@ homicide_nest %>%
 | Memphis, TN        |  0.3190225|  0.2957047|  0.3432691|
 | Charlotte, NC      |  0.2998544|  0.2660820|  0.3358999|
 | Richmond, VA       |  0.2634033|  0.2228571|  0.3082658|
-| Tulsa, AL          |  0.0000000|  0.0000000|  0.9453792|
 
-Create a plot that shows the estimates and CIs for each city – check out geom\_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
+*Create a plot that shows the estimates and CIs for each city – check out geom\_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.*
+
+``` r
+homicide_ci %>% 
+  mutate(city_state = reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) + 
+  geom_bar(stat = "identity", alpha = 0.7) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
+  labs(
+      title = "Proportion of Homicides that Remain Unsolved in Each City", 
+      y = "Proportion Unsolved",
+      x = "n"
+    ) +
+    theme_bw() + 
+    theme(legend.position = "bottom", axis.text.x = element_text(angle = 80, hjust = 1))
+```
+
+![](hw5_files/figure-markdown_github/unnamed-chunk-9-1.png)
