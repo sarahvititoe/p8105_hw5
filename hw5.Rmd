@@ -11,30 +11,31 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-Homework 5
-Context
-This assignment reinforces ideas in Iteration.
+```{r}
+patient_records <- list.files(path = "./data", pattern = "^[ce][ox][np]_[0-9][0-9].csv$")
+```
 
-Due date
-Due: November 9 at 4:00pm.
+```{r}
+read_records <- function(files){
+  
+  df <- read_csv(files)
+  
+  df <- df %>% 
+    mutate(file_name = str_extract(files, "[ce][ox][np]_[0-9][0-9]"))
+  
+  df
+  
+}
+```
 
-Points
-Problem 0: 20 points
-Problem 1: 35 points
-Problem 2: 45 points
-Problem 0
-This “problem” focuses on structure of your submission, especially the use git and GitHub for reproducibility, R Projects to organize your work, R Markdown to write reproducible reports, relative paths to load data from local files, and reasonable naming structures for your files.
+Test this function on 1 dataframe
+```{r}
+read_records("./data/con_01.csv")
+```
 
-To that end:
 
-create a public GitHub repo + local R Project for this assignment
-write solutions using a .Rmd file that outputs a github_document / .md file
-submit a link to your repo via Courseworks
-Your solutions to Problems 1 and 2 should be implemented in your .Rmd file, and your git commit history should reflect the process you used to solve these Problems.
 
-For Problem 0, we will assess adherence to the instructions above regarding repo structure, git commit history, and whether we are able to knit your .Rmd to ensure that your work is reproducible. Adherence to appropriate styling and clarity of code will be assessed in Problems 1+ using the homework style rubric.
 
-This homework includes figures; the readability of your embedded plots (e.g. font sizes, axis labels, titles) will be assessed in Problems 1+.
 
 Problem 1
 This zip file contains data from a longitudinal study that included a control arm and an experimental arm. Data for each participant is included in a separate file, and file names include the subject ID and arm.
