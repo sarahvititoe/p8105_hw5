@@ -26,7 +26,7 @@ patient_files <- str_c("./data/", list.files(path = "./data", pattern = "^[ce][o
 ```{r}
 read_records <- function(files){
   
-  df <- read_csv(files)
+  df <- read_csv(files, col_types = cols(.default = "d"))
   
   df
   
